@@ -11,11 +11,12 @@
 import requests
 import re
 import time
+from config import argus_login, argus_pass
 
 
 url = 'https://helper.ural.rt.ru/main'
-log = '' # Логин от Аргуса
-pas = ''    # Пароль от Аргуса
+log = argus_login # Логин от Аргуса
+pas = argus_pass    # Пароль от Аргуса
 s = requests.session()
 sesion = s.post(url, data={"act":"login", "login":"{}".format(log), "password":"{}".format(pas)})
 

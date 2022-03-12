@@ -4,8 +4,9 @@ from aiogram.utils import executor
 from aiogram.types import ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 from get import *
 import re
+from config import telegram_token
 
-bot = Bot('') #Telegram bot token
+bot = Bot(telegram_token) #Telegram bot token
 dp = Dispatcher(bot)
 
 
