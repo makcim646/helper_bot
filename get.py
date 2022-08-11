@@ -21,9 +21,6 @@ s = requests.session()
 sesion = s.post(url, data={"act":"login", "login":"{}".format(log), "password":"{}".format(pas)})
 
 
-def main():
-    pass
-
 def tv_code(login_tv):
     """Получить код активации по логину услуги на приставки"""
     r = s.post(url, data={"act":"getiptvpassword","login":f"{login_tv}","bi_id":11111111})
@@ -43,7 +40,9 @@ def tv_code(login_tv):
     else:
         return 'Неверный логин услуги'
 
+
 def clean_mac(mac):
+    """отвязать мак от приставки"""
     r = s.post(url, data={"act":"erasemacs","login":f"{mac}","bi_id":11111111})
     if r.json()['status'] == True:
         return "MAC удален"
@@ -58,29 +57,31 @@ def kill_session(login):
         return r.json()['body']
     return "Не удалось сбросит сессию"
 
+
 def login(login):
     """Получит информацию по логну"""
-
+    login_data = ['Пакеты', 'Баланс:', 'Статус', '<hr>Сессия:', 'Начало', 'Прод', 'mac-адрес:', 'порт']
     r = s.post(url, data={"act":"getinfologin","login":f"{login}","bi_id":11111111})
     list_data = r.text.split('<br>')
+
+
+
     if '<hr>Сессия:  НЕ АКТИВНА' in list_data:
         return f'{login}\nСессия:  НЕ АКТИВНА'
     else:
-        data = []
-        data += list_data[6:10]
-        data += list_data[14:16]
         text = f'{login}\n'
-        for i in data:
-            text += i.strip('<hr>') + '\n'
-            if 'порт подключения:' in i:
-                port = (i.split(':')[1]).strip(' ')
+        for d in list_data:
+            try:
+                if d.split()[0] in login_data:
+                    text += d.strip('<hr>') + '\n'
+            except:
+                pass
 
         return text
 
 
 def paswd(login):
     """Получит пароль по логину"""
-
     r = s.post(url, data={"act":"getpppoepassword","login":f"{login}","bi_id":11111111})
     if r.json()['status'] == False:
         return "Немогу получить пароль."
@@ -89,6 +90,7 @@ def paswd(login):
 
 
 def port_login(login):
+    """Измерить состояние порта по логину"""
     r = s.post(url, data={"act":"measureont","login":f"{login}","bi_id":f"{login}"})
     list_data = r.text.split('</td>')
     if r.json()['status'] == False:
@@ -111,7 +113,9 @@ def port_login(login):
 
     return text + port_searc
 
-def see_split(port):
+
+def see_olt_port(port):
+    """Проверить порт OLT"""
     port_data = port.strip('[').split('.')
     a = port_data[0:3]
     if port_data[3][-3] == '-':
@@ -130,53 +134,85 @@ def see_split(port):
         for i in port_data[3].split(' '):
             a.append(i.strip(']'))
 
-    port = f'[{a[0]}.{a[1]}.{a[2]}.{a[3]}] {a[4]}-{a[5]}-'
 
+    port = f'[{a[0]}.{a[1]}.{a[2]}.{a[3]}] {a[4]}-{a[5]}-'
     out_text = ''
 
 
-    if int(a[6]) < 33:
-        for c in range(1,33):
+    for c in range(0,65):
             r = s.post(url, data={"act":"measureont","login":f"{port+str(c)}","bi_id":f"{port}"})
             list_data = r.text.split('</td>')
             if r.json()['status'] == False:
-                out_text += port + ' не возможно измерить' + '\n'
+                return f'Невозможно измерить порт OLT {port_olt}\nПроверьте верность верность введеного ip'
 
             out =[]
             for i in list_data:
                 out.append(i.split('<td>')[1])
 
-            dic = []
-            for i in range(0,14,2):
-                dic.append([out[i], out[i+1]])
+            out_text += out[5] + ' ' +  out[7] + '\n'
 
-            out_text += dic[2][1] + ' ' +  dic[3][1] + '\n'
+    return out_text
 
-            time.sleep(0.1)
+
+def see_split(port):
+    """Проверить сплитер на котром находиться данный порт"""
+    port_data = port.strip('[').split('.')
+    a = port_data[0:3]
+    if port_data[3][-3] == '-':
+        new = port_data[3].split(' ')
+        a.append(new[0].strip(']'))
+        for i in new[1].split('-'):
+            a.append(i)
+
+    elif port_data[3][-2] == '-':
+        new = port_data[3].split(' ')
+        a.append(new[0].strip(']'))
+        for i in new[1].split('-'):
+            a.append(i)
+
+    else:
+        for i in port_data[3].split(' '):
+            a.append(i.strip(']'))
+
+
+    port = f'[{a[0]}.{a[1]}.{a[2]}.{a[3]}] {a[4]}-{a[5]}-'
+    port_olt = f'[{a[0]}.{a[1]}.{a[2]}.{a[3]}] {a[4]}-{a[5]}'
+    out_text = ''
+
+    if int(a[6]) < 33:
+        for c in range(0,33):
+            r = s.post(url, data={"act":"measureont","login":f"{port+str(c)}","bi_id":f"{port}"})
+            list_data = r.text.split('</td>')
+            if r.json()['status'] == False:
+                return f'Невозможно измерить порт OLT {port_olt}\nПроверьте верность верность введеного ip'
+
+
+            out =[]
+            for i in list_data:
+                out.append(i.split('<td>')[1])
+
+
+            out_text += out[5] + ' ' +  out[7] + '\n'
+
 
     else:
         for c in range(33, 65):
             r = s.post(url, data={"act":"measureont","login":f"{port+str(c)}","bi_id":f"{port}"})
             list_data = r.text.split('</td>')
             if r.json()['status'] == False:
-                out_text += port + ' не возможно измерить' + '\n'
+               return f'Невозможно измерить порт OLT {port_olt}\nПроверьте верность верность введеного ip'
 
             out =[]
             for i in list_data:
                 out.append(i.split('<td>')[1])
 
-            dic = []
-            for i in range(0,14,2):
-                dic.append([out[i], out[i+1]])
-
-            out_text += dic[2][1] + ' ' +  dic[3][1] + '\n'
-            time.sleep(0.1)
+            out_text += out[5] + ' ' +  out[7] + '\n'
 
     return out_text
 
 
 def port(port):
-    """Измерить состояние порта по порту"""
+    """Измерить состояние порта"""
     port_data = port.strip('[').split('.')
     a = port_data[0:3]
     if port_data[3][-3] == '-':
@@ -201,12 +237,13 @@ def port(port):
     r = s.post(url, data={"act":"measureont","login":f"{port}","bi_id":f"{port}"})
     list_data = r.text.split('</td>')
     if r.json()['status'] == False:
-        return "Невозможно измерить порт\n" + port
+        return "Невозможно измерить порт.\nПроверьте верность введеного ip\n" + port
 
 
     out =[]
     for i in list_data:
         out.append(i.split('<td>')[1])
+
 
     dic = []
     for i in range(0,14,2):
@@ -217,6 +254,7 @@ def port(port):
         if i[0] == 'Номер порта':
             port_searc = i[1]
         text+= f'{i[0]} {i[1]}\n'
+
 
     return text + port_searc
 
