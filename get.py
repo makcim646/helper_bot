@@ -1,120 +1,60 @@
-#-------------------------------------------------------------------------------
-# Name:        module1
-# Purpose:
-#
-# Author:      Admin
-#
-# Created:     31.07.2021
-# Copyright:   (c) Admin 2021
-# Licence:     <your licence>
-#-------------------------------------------------------------------------------
 import requests
 import re
 import time
-from config import argus_login, argus_pass
+from config import argus_login as log, argus_pass as pas, telegram_token
+import telebot
+import threading
+from helper import Helper
 
 
-url = 'https://helper.ural.rt.ru/main'
-log = argus_login # Логин от Аргуса
-pas = argus_pass    # Пароль от Аргуса
-s = requests.session()
-sesion = s.post(url, data={"act":"login", "login":"{}".format(log), "password":"{}".format(pas)})
+bot = telebot.TeleBot(telegram_token, parse_mode='MARKDOWN')
+helper = Helper(log, pas)
 
 
-def tv_code(login_tv):
+def update_session():
+    while True:
+        time.sleep(60*60)
+        helper.update_session()
+        
+
+
+def tv_code(login_tv, msg_id):
     """Получить код активации по логину услуги на приставки"""
-    r = s.post(url, data={"act":"getiptvpassword","login":f"{login_tv}","bi_id":11111111})
-    if r.json()['status'] == True:
-        data = r.text.split('\\n')
-
-        mac_list = []
-        for d in data:
-          if re.search(r'([0-9A-F]{2}[:-]){5}([0-9A-F]{2})', d, re.I) != None:
-            mac_list.append(d)
-
-        mac = ''
-        for m in mac_list:
-            mac += str(f'`{m}`' + '\n')
-
-        return f'Логин: {data[5]}\nКод: {data[6]}\n\n' + mac
-    else:
-        return 'Неверный логин услуги'
+    text = helper.tv_info(login_tv)
+    bot.send_message(msg_id, text)
 
 
-def clean_mac(mac):
+def clean_mac(mac, msg_id):
     """отвязать мак от приставки"""
-    r = s.post(url, data={"act":"erasemacs","login":f"{mac}","bi_id":11111111})
-    if r.json()['status'] == True:
-        return "MAC удален"
-    else:
-        return 'Неверный MAC'
+    text = helper.clean_mac(mac)
+    bot.send_message(msg_id, text)
 
 
-def kill_session(login):
+def kill_session(login, msg_id):
     """Сбросит PPPOE-сесию по логину"""
-    r = s.post(url, data={"act":"killpppoesession","login":f"{login}","bi_id":11111111})
-    if r.json()['status'] == True:
-        return r.json()['body']
-    return "Не удалось сбросит сессию"
+    text = helper.kill_session(login)
+    bot.send_message(msg_id, "Не удалось сбросит сессию")
 
 
-def login(login):
+def login(login, msg_id, markup):
     """Получит информацию по логну"""
-    login_data = ['Пакеты', 'Баланс:', 'Статус', '<hr>Сессия:', 'Начало', 'Прод', 'mac-адрес:', 'порт']
-    r = s.post(url, data={"act":"getinfologin","login":f"{login}","bi_id":11111111})
-    list_data = r.text.split('<br>')
+    text = helper.login_info(login)
+    bot.send_message(msg_id, text, reply_markup=markup)
 
 
-
-    if '<hr>Сессия:  НЕ АКТИВНА' in list_data:
-        return f'{login}\nСессия:  НЕ АКТИВНА'
-    else:
-        text = f'{login}\n'
-        for d in list_data:
-            try:
-                if d.split()[0] in login_data:
-                    text += d.strip('<hr>') + '\n'
-            except:
-                pass
-
-        return text
-
-
-def paswd(login):
+def paswd(login, msg_id):
     """Получит пароль по логину"""
-    r = s.post(url, data={"act":"getpppoepassword","login":f"{login}","bi_id":11111111})
-    if r.json()['status'] == False:
-        return "Немогу получить пароль."
-    list_data = r.text.split('\\n')
-    return list_data[4]
+    text = helper.paswd(login)
+    bot.send_message(msg_id, text)
 
 
-def port_login(login):
+def port_login(login, msg_id, markup):
     """Измерить состояние порта по логину"""
-    r = s.post(url, data={"act":"measureont","login":f"{login}","bi_id":f"{login}"})
-    list_data = r.text.split('</td>')
-    if r.json()['status'] == False:
-        return "Невозможно измерить порт\n" + port
+    text = helper.port_login(login)
+    bot.send_message(msg_id, text, reply_markup=markup)
 
 
-    out =[]
-    for i in list_data:
-        out.append(i.split('<td>')[1])
-
-    dic = []
-    for i in range(0,14,2):
-        dic.append([out[i], out[i+1]])
-
-    text = ''
-    for i in dic:
-        if i[0] == 'Номер порта':
-            port_searc = i[1]
-        text+= f'{i[0]} {i[1]}\n'
-
-    return text + port_searc
-
-
-def see_olt_port(port):
+def see_olt_port(port, msg_id):
     """Проверить порт OLT"""
     port_data = port.strip('[').split('.')
     a = port_data[0:3]
@@ -136,25 +76,12 @@ def see_olt_port(port):
 
 
     port = f'[{a[0]}.{a[1]}.{a[2]}.{a[3]}] {a[4]}-{a[5]}-'
-    out_text = ''
+
+    text = helper.see_olt_port(port)
+    bot.send_message(msg_id, text)
 
 
-    for c in range(0,65):
-            r = s.post(url, data={"act":"measureont","login":f"{port+str(c)}","bi_id":f"{port}"})
-            list_data = r.text.split('</td>')
-            if r.json()['status'] == False:
-                return f'Невозможно измерить порт OLT {port_olt}\nПроверьте верность верность введеного ip'
-
-            out =[]
-            for i in list_data:
-                out.append(i.split('<td>')[1])
-
-            out_text += out[5] + ' ' +  out[7] + '\n'
-
-    return out_text
-
-
-def see_split(port):
+def see_split(port, msg_id):
     """Проверить сплитер на котром находиться данный порт"""
     port_data = port.strip('[').split('.')
     a = port_data[0:3]
@@ -176,42 +103,12 @@ def see_split(port):
 
 
     port = f'[{a[0]}.{a[1]}.{a[2]}.{a[3]}] {a[4]}-{a[5]}-'
-    port_olt = f'[{a[0]}.{a[1]}.{a[2]}.{a[3]}] {a[4]}-{a[5]}'
-    out_text = ''
 
-    if int(a[6]) < 33:
-        for c in range(0,33):
-            r = s.post(url, data={"act":"measureont","login":f"{port+str(c)}","bi_id":f"{port}"})
-            list_data = r.text.split('</td>')
-            if r.json()['status'] == False:
-                return f'Невозможно измерить порт OLT {port_olt}\nПроверьте верность верность введеного ip'
+    text = helper.see_split(port, a[6])
+    bot.send_message(msg_id, text, )
 
 
-            out =[]
-            for i in list_data:
-                out.append(i.split('<td>')[1])
-
-
-            out_text += out[5] + ' ' +  out[7] + '\n'
-
-
-    else:
-        for c in range(33, 65):
-            r = s.post(url, data={"act":"measureont","login":f"{port+str(c)}","bi_id":f"{port}"})
-            list_data = r.text.split('</td>')
-            if r.json()['status'] == False:
-               return f'Невозможно измерить порт OLT {port_olt}\nПроверьте верность верность введеного ip'
-
-            out =[]
-            for i in list_data:
-                out.append(i.split('<td>')[1])
-
-            out_text += out[5] + ' ' +  out[7] + '\n'
-
-    return out_text
-
-
-def port(port):
+def port(port, msg_id, markup):
     """Измерить состояние порта"""
     port_data = port.strip('[').split('.')
     a = port_data[0:3]
@@ -233,29 +130,6 @@ def port(port):
 
     port = f'[{a[0]}.{a[1]}.{a[2]}.{a[3]}] {a[4]}-{a[5]}-{a[6]}'
 
-
-    r = s.post(url, data={"act":"measureont","login":f"{port}","bi_id":f"{port}"})
-    list_data = r.text.split('</td>')
-    if r.json()['status'] == False:
-        return "Невозможно измерить порт.\nПроверьте верность введеного ip\n" + port
-
-
-    out =[]
-    for i in list_data:
-        out.append(i.split('<td>')[1])
-
-
-    dic = []
-    for i in range(0,14,2):
-        dic.append([out[i], out[i+1]])
-
-    text = ''
-    for i in dic:
-        if i[0] == 'Номер порта':
-            port_searc = i[1]
-        text+= f'{i[0]} {i[1]}\n'
-
-
-    return text + port_searc
-
+    text = helper.port_info(port)
+    bot.send_message(msg_id, text, reply_markup=markup)
 
