@@ -5,7 +5,7 @@ from telebot import types
 import asyncio
 from get import *
 import threading
-bot = AsyncTeleBot('5592934582:AAGfEygBmfoLRuXps1MGMLukB74YDSI9I3c')
+bot = AsyncTeleBot()
 
 
 button1 = InlineKeyboardButton("Опросить порт", callback_data='port_searc')
