@@ -1,2 +1,7 @@
+<<<<<<< HEAD
 asyncio
 pyTelegramBotAPI
+=======
+pyTelegramBotAPI
+asyncio
+>>>>>>> 19f3e3f869b4059bc561456b83b56f9f270786fb
