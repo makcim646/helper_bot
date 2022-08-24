@@ -41,6 +41,7 @@ class Helper():
 
     def port_login(self,login):
         """Измерить состояние порта по логину"""
+        print(login)
         try:
             r = self.s.post(self.url, data={"act":"measureont","login":f"{login}","bi_id":f"{login}"})
             list_data = r.text.split('</td>')
