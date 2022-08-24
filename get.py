@@ -12,8 +12,13 @@ helper = Helper(log, pas)
 def update_session():
     while True:
         time.sleep(60*60)
-        sesion = helper.update_session()
-        return sesion
+        helper.update_session()
+        
+def status_sesion():
+    return helper.update_session()
+    
+    
+
         
 
 
