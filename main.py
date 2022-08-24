@@ -23,7 +23,13 @@ button7 = InlineKeyboardButton("Проверить порт OLT", callback_data=
 otvet1 = InlineKeyboardMarkup(row_width=2).add(button1,button2, button3, button4)
 otvet2 = InlineKeyboardMarkup(row_width=2).add(button5, button6, button7)
 
-#threading.Thread(target = hello, args = (1,), daemon = True).start()
+@bot.message_handler(commands=['status'])
+async def send_welcome(msg):
+    await bot.send_message(msg.from_user.id, update_session())
+
+
+
+
 @bot.message_handler(func=lambda message: True)
 async def echo_message(msg):
     try:
@@ -50,15 +56,8 @@ async def echo_message(msg):
         Пример для логина: 77660000000 или 77060000000.\nПример для порта: [0.0.0.0] 0-0-0 или 0.0.0.0 0 0 0.\nВведите mac пиставки что бы его удалит, пример 00:00:00:00:00:00.')
     except Exception as e:
         print(e)
+             
         
-        
-        
-@bot.message_handler(commands=['status'])
-async def send_welcome(msg):
-    await bot.send_message(msg.from_user.id, update_session())
-	
-
-
 
 
 @bot.callback_query_handler(lambda c: c.data == 'port_searc')
