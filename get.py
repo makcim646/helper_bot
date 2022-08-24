@@ -16,8 +16,9 @@ def update_session():
       
         
 def status_sesion():
-    sesion = helper.update_session()
-    return sesion
+    session = helper.sesion.text.strip('{}')
+    text = '\n'.join(session.split(','))
+    return text
           
 
 def tv_code(login_tv, msg_id):
