@@ -16,7 +16,8 @@ def update_session():
       
         
 def status_sesion():
-    return helper.update_session()
+    sesion = helper.update_session()
+    return sesion
           
 
 def tv_code(login_tv, msg_id):
