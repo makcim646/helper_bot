@@ -13,7 +13,6 @@ def update_session():
     while True:
         time.sleep(60*60)
         sesion = helper.update_session()
-        print(sesion)
         return sesion
         
 
