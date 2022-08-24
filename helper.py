@@ -11,6 +11,7 @@ class Helper():
         self.log = login
         self.password = password
         sesion = self.s.post(self.url, data={"act":"login", "login":"{}".format(login), "password":"{}".format(password)})
+        print(sesion.text)
 
 
 
@@ -240,4 +241,4 @@ class Helper():
     
     def update_session(self):
         sesion = self.s.post(self.url, data={"act":"login", "login":"{}".format(self.log), "password":"{}".format(self.password)})
-        return sesion
+        return sesion.text

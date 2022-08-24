@@ -50,6 +50,13 @@ async def echo_message(msg):
         Пример для логина: 77660000000 или 77060000000.\nПример для порта: [0.0.0.0] 0-0-0 или 0.0.0.0 0 0 0.\nВведите mac пиставки что бы его удалит, пример 00:00:00:00:00:00.')
     except Exception as e:
         print(e)
+        
+        
+        
+@bot.message_handler(commands=['status'])
+async def send_welcome(msg):
+    await bot.send_message(msg.from_user.id, update_session())
+	
 
 
 

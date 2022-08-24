@@ -12,7 +12,9 @@ helper = Helper(log, pas)
 def update_session():
     while True:
         time.sleep(60*60)
-        print(helper.update_session())
+        sesion = helper.update_session()
+        print(sesion)
+        return sesion
         
 
 
