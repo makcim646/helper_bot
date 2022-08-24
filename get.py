@@ -13,14 +13,11 @@ def update_session():
     while True:
         time.sleep(60*60)
         helper.update_session()
+      
         
 def status_sesion():
     return helper.update_session()
-    
-    
-
-        
-
+          
 
 def tv_code(login_tv, msg_id):
     """Получить код активации по логину услуги на приставки"""

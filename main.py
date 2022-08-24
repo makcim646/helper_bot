@@ -25,7 +25,7 @@ otvet2 = InlineKeyboardMarkup(row_width=2).add(button5, button6, button7)
 
 @bot.message_handler(commands=['status'])
 async def send_welcome(msg):
-    await bot.send_message(msg.from_user.id, update_session())
+    await bot.send_message(msg.from_user.id, status_sesion)
 
 
 
