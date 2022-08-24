@@ -11,7 +11,6 @@ class Helper():
         self.log = login
         self.password = password
         sesion = self.s.post(self.url, data={"act":"login", "login":"{}".format(login), "password":"{}".format(password)})
-        print(sesion.text)
 
 
 
