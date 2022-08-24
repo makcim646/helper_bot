@@ -1,4 +1,5 @@
 import requests
+import re
 
 
 class Helper():
@@ -7,7 +8,7 @@ class Helper():
     def __init__(self, login, password):
         self.url = 'https://helper.ural.rt.ru/main'
         self.s = requests.session()
-        self.login = login
+        self.log = login
         self.password = password
         sesion = self.s.post(self.url, data={"act":"login", "login":"{}".format(login), "password":"{}".format(password)})
 
@@ -238,5 +239,5 @@ class Helper():
     
     
     def update_session(self):
-        sesion = self.s.post(self.url, data={"act":"login", "login":"{}".format(self.login), "password":"{}".format(self.password)})
+        sesion = self.s.post(self.url, data={"act":"login", "login":"{}".format(self.log), "password":"{}".format(self.password)})
         return sesion
