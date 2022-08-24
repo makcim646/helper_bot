@@ -57,7 +57,6 @@ async def echo_message(msg):
 @bot.callback_query_handler(lambda c: c.data == 'port_searc')
 async def process_callback_button1(callback_query: types.CallbackQuery):
     port_out = callback_query.message.text.split('\n')[0]
-    print(port_out)
     await bot.answer_callback_query(callback_query.id)
     threading.Thread(target = port_login, args = (port_out, callback_query.from_user.id, otvet2), daemon = True).start()
 
